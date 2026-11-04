@@ -1,0 +1,43 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "Rename me"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "pydantic-settings>=2.6",
+    "uvicorn[standard]>=0.32",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16",  # FastAPI's TestClient; plain httpx is deprecated there
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/F: errors · I: import order · B: likely bugs · UP: modern syntax · S: security · SIM: simpler code
+# C90 + PLR0915: function too complex / too long. Big companies limit function size more than file size.
+select = ["E", "F", "I", "B", "UP", "S", "SIM", "C90", "PLR0915"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10  # branches per function; above this, split the function
+
+[tool.ruff.lint.pylint]
+max-statements = 50  # statements per function
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is how pytest works

@@ -1,0 +1,7 @@
+# Secret scan before every commit. Claude's hooks only watch Claude; this also catches your own commits.
+# Enable once per clone: uvx pre-commit install
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks

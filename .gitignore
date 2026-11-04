@@ -1,0 +1,38 @@
+# Secrets: only the example file is committed
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Claude Code: personal files stay local
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+
+# IDE files
+.idea/
+.vscode/
+
+# OS temporary files
+.DS_Store
+Thumbs.db
