@@ -47,7 +47,8 @@ for c in 'git reset "--hard"' "git reset '--hard' HEAD~1" 'git clean "-fd"' 'git
          'sudo -u root rm -rf /srv/x' 'rm "-rf" build' 'find . -name tmp -exec rm -rf {} +' 'xargs -I {} rm -rf {}' \
          "bash -c 'git push --force'" 'ssh vps "git -C /app reset --hard"' \
          "python3 -c \"import os; os.system('git reset --hard')\"" $'# it\'s fine\ngit reset --hard' \
-         $'bash <<EOF\ngit reset --hard\nEOF' 'docker exec app sh -c "rm -rf /data"'; do
+         $'bash <<EOF\ngit reset --hard\nEOF' 'docker exec app sh -c "rm -rf /data"' 'ssh vps git reset --hard' \
+         $'python3 <<EOF\nimport os\nos.system("git reset --hard")\nEOF' "find . -exec sh -c 'rm -rf \"\$1\"' _ {} \\;"; do
   expect 2 guard-bash.sh "$(bash_call "$c")" "$c"
 done
 # guard-bash: a danger that is only mentioned (commit message, grep pattern, here-document) is allowed
@@ -56,7 +57,8 @@ for c in 'git commit -m "docs: never run git reset --hard"' 'grep -n "git clean 
          'git log --grep "reset --hard"' \
          $'git commit -m "$(cat <<\'EOF\'\nfix: block git push --force and git reset --hard\nEOF\n)"' \
          'git restore --staged .' 'git checkout -b feat/x' 'git checkout main' 'git clean -n' 'git push -u origin feat/x' \
-         $'cat > a.sh <<EOF\ngit reset --hard\nEOF' "echo 'rm -rf /' > notes.txt" 'git add -A && git commit -m "chore: tidy (rm -rf old)"'; do
+         $'cat > a.sh <<EOF\ngit reset --hard\nEOF' "echo 'rm -rf /' > notes.txt" 'git add -A && git commit -m "chore: tidy (rm -rf old)"' \
+         'bash scripts/test-hooks.sh && git commit -m "block git reset --hard"' "printf x | bash -c \"\$1\"; echo 'rm -fr backend'"; do
   expect 0 guard-bash.sh "$(bash_call "$c")" "$c"
 done
 

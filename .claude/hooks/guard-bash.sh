@@ -6,10 +6,11 @@
 # The rm and git rules read the command the way bash does: split into simple commands at ; & | ( ) `
 # and newlines outside quotes, with quote marks removed but words kept. So `git reset "--hard"` is caught,
 # and a danger that is only mentioned (git commit -m "never run git reset --hard") is not. Commands inside
-# $(...) and backticks are checked too, even inside double quotes; here-document bodies are skipped.
-# When quoted text may run as code (bash -c, python3 -c, eval, ssh, ...), every git / rm / find word in
-# the full text is checked as well (fail safe). Not a sandbox: a command built at run time (variables,
-# base64) can get past it. Permissions, auto mode and backups are the other locks.
+# $(...) and backticks are checked too, even inside double quotes. A here-document body counts as one
+# word of the command that reads it. When a shell or interpreter runs text (bash -c "...", ssh host "...",
+# python3 -c "...", bash <<EOF), every git / rm / find word in that text is checked (fail safe); text
+# elsewhere in the command is not. Not a sandbox: a command built at run time (variables, base64) can
+# get past it. Permissions, auto mode and backups are the other locks.
 set -uo pipefail
 
 command -v jq >/dev/null || { echo "Blocked: safety hooks need jq (brew install jq / apt install jq)." >&2; exit 2; }
@@ -22,9 +23,8 @@ block() {
 }
 
 # Print each simple command on its own line, its words separated by \037. POSIX awk, bash 3.2 safe.
-# words <command> [keep] : with "keep", here-document bodies are read as commands too (bash <<EOF runs them).
 words() {
-  printf '%s' "$1" | awk -v RS='\001' -v keep="${2:-}" '
+  printf '%s' "$1" | awk -v RS='\001' '
     function endtok() { if (have) { seg = (ntok ? seg US : "") tok; ntok++ } tok = ""; have = 0 }
     function endseg() { endtok(); if (ntok) print seg; seg = ""; ntok = 0 }
     function push(closer) { # $( or ` inside double quotes: its commands run, so read them as commands
@@ -46,16 +46,18 @@ words() {
       }
       if (dl != "") { nhd++; hd[nhd] = dl; hdash[nhd] = dash }
     }
-    function heredocs(   k, j, line) { # skip here-document bodies: they are data, not commands
+    function heredocs(   k, j, line, body) { # here-document bodies: one word of the command, lines joined by ;
+      endtok(); body = ""
       for (k = 1; k <= nhd; k++) {
         while (i < n) {
           j = index(substr(s, i + 1), "\n")
           if (j) { line = substr(s, i + 1, j - 1); i += j } else { line = substr(s, i + 1); i = n }
           if (hdash[k]) sub(/^\t+/, "", line)
           if (line == hd[k]) break
+          body = body line ";"
         }
       }
-      nhd = 0
+      nhd = 0; tok = body; have = 1; endtok()
     }
     BEGIN { US = sprintf("%c", 31); SUBST = sprintf("%c", 30) }
     {
@@ -74,9 +76,9 @@ words() {
         if (c == "\047" || c == "\"") { q = c; have = 1; continue }
         if (c == "#" && !have) { while (i < n && substr(s, i + 1, 1) != "\n") i++; continue }
         if (c == "<" && substr(s, i + 1, 2) == "<<") { endtok(); i += 2; continue }
-        if (c == "<" && substr(s, i + 1, 1) == "<") { endtok(); i++; if (keep == "") heredoc_op(); continue }
+        if (c == "<" && substr(s, i + 1, 1) == "<") { endtok(); i++; heredoc_op(); continue }
         if (c == " " || c == "\t" || c == "<" || c == ">") { endtok(); continue }
-        if (c == "\n") { endseg(); if (nhd) heredocs(); continue }
+        if (c == "\n") { if (nhd) heredocs(); endseg(); continue }
         if (c == "(") { endseg(); if (d) par[d]++; continue }
         if (c == ")") { endseg(); if (d && par[d]) par[d]--; else if (d && cl[d] == ")") pop(); continue }
         if (c == "`") { endseg(); if (d && cl[d] == "`") pop(); continue }
@@ -167,27 +169,30 @@ check_cmd() { # <word>... : one simple command; skip what runs in front of it (V
   return 0
 }
 
-runs_code=0
+check_script() { # <text a shell or interpreter will run> : every git / rm / find word in it
+  local line j
+  local -a s
+  while IFS= read -r line; do
+    IFS=$US read -ra s <<<"$line"
+    for ((j = 0; j < ${#s[@]}; j++)); do
+      case ${s[j]##*/} in git | rm | find) check_cmd "${s[@]:j}" ;; esac
+    done
+  done < <(words "$(tr -d '\042\047\134\133\135\054' <<<"$1")") # quotes, \ [ ] , removed: python code too
+  return 0
+}
+
 while IFS= read -r line; do
   IFS=$US read -ra w <<<"$line"
   ((${#w[@]})) || continue
-  for x in "${w[@]}"; do
-    case ${x##*/} in
-      bash | sh | zsh | dash | ksh | fish | eval | ssh | su | watch | osascript | node | deno | bun | perl | ruby | php | python | python[0-9]*) runs_code=1 ;;
+  check_cmd "${w[@]}"
+  for ((k = 0; k < ${#w[@]}; k++)); do # text after a shell or interpreter runs as code
+    case ${w[k]##*/} in
+      bash | sh | zsh | dash | ksh | fish | eval | ssh | su | watch | osascript | node | deno | bun | perl | ruby | php | python | python[0-9]*)
+        ((k + 1 < ${#w[@]})) && check_script "$(printf '%s ' "${w[@]:k+1}")"
+        break ;;
     esac
   done
-  check_cmd "${w[@]}"
 done < <(words "$cmd")
-
-# Quoted text may run as code: check every git / rm / find word in the full text, quotes and brackets removed.
-if ((runs_code)); then
-  while IFS= read -r line; do
-    IFS=$US read -ra w <<<"$line"
-    for ((j = 0; j < ${#w[@]}; j++)); do
-      case ${w[j]##*/} in git | rm | find) check_cmd "${w[@]:j}" ;; esac
-    done
-  done < <(words "$(tr -d '\042\047\134\133\135\054' <<<"$cmd")" keep) # removes " ' \ [ ] ,
-fi
 
 # dropping data
 grep -qiE '(drop[[:space:]]+(table|database|schema)|truncate[[:space:]]+table)' <<<"$cmd" && block "dropping database objects"

@@ -2,6 +2,18 @@
 
 Each entry says what changed in Claude Code (or in our understanding), what we changed, and why.
 
+## 0.1.2 · 2026-11-08
+`guard-bash.sh`: the fail-safe check now reads only the text a shell or interpreter will run.
+- **Why:** in 0.1.1, one `bash` word anywhere made the guard scan the whole command, so
+  `printf x | bash -c "$1"; echo 'rm -fr backend'` was blocked although `rm` was only data. Found the
+  same day, when the global copy blocked a real check.
+- **How:** for `bash -c "…"`, `ssh host …`, `python3 -c "…"`, `eval …`, only the words after the shell or
+  interpreter are re-read as commands. A here-document body is now one word of the command that reads
+  it, so `bash <<EOF` / `python3 <<EOF` bodies are checked and `cat <<EOF` bodies stay data.
+- **New blocks:** `ssh vps git reset --hard` (no quotes), `python3 <<EOF … os.system("git reset --hard")`,
+  `find . -exec sh -c 'rm -rf "$1"' _ {} \;`.
+- Tests: 91 → 96.
+
 ## 0.1.1 · 2026-11-08
 `guard-bash.sh`: the rm and git rules now read a command the way bash does, not as one long string.
 - **Why:** an audit found 7 dangerous commands that slipped past this guard or a project's copy of it.
