@@ -2,6 +2,23 @@
 
 Each entry says what changed in Claude Code (or in our understanding), what we changed, and why.
 
+## 0.1.1 · 2026-11-08
+`guard-bash.sh`: the rm and git rules now read a command the way bash does, not as one long string.
+- **Why:** an audit found 7 dangerous commands that slipped past this guard or a project's copy of it.
+  Quotes do not make an argument harmless: `git reset "--hard"`, `git clean "-fd"`, `git checkout "."`
+  still run. A project copy that ignored quoted text, to stop false alarms, also missed
+  `echo "$(git reset --hard)"` and `python3 -c "…os.system('git reset --hard')"`.
+- **How:** split the command at ``; & | ( ) ` `` and newlines outside quotes, then remove the quote marks but keep the
+  words. Commands inside `$(…)` and backticks are checked even inside double quotes. Here-document
+  bodies are skipped, except when a shell reads them (`bash <<EOF`). When quoted text may run as code
+  (`bash -c`, `python3 -c`, `eval`, `ssh`, …), every git / rm / find word in the full text is checked too.
+- **New blocks:** `git checkout .`, `git restore .` (but not `git restore --staged .`), `find -exec rm -rf`,
+  `xargs rm -rf`, `sudo -u x rm -rf`, `git -C dir reset --hard`, combined flags like `git push -fu`.
+- **No more false alarms** when a danger is only mentioned: commit messages, grep patterns, `echo`,
+  here-documents (`git commit -m "$(cat <<'EOF' … EOF)"`).
+- Still not a sandbox: a command built at run time (variables, base64) can get past it.
+- Tests: 49 → 91 in `scripts/test-hooks.sh`, passing on macOS bash 3.2.
+
 ## 0.1.0 · 2026-11-04
 First version.
 - Structure from the Euron Super30 masterclass: CLAUDE.md, 4 skills, 3 agents, 3 commands, hooks, docs.

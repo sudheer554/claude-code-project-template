@@ -37,6 +37,28 @@ for c in 'ls -la' 'rm build/old.log' 'rm -r build' 'git push origin main' \
          'git check-ignore -v .env && scripts/check.sh | tail -3'; do
   expect 0 guard-bash.sh "$(bash_call "$c")" "$c"
 done
+# guard-bash: quotes do not make an argument harmless, and commands inside $(...), `...`, bash -c,
+# ssh "..." and python3 -c still run. All blocked.
+for c in 'git reset "--hard"' "git reset '--hard' HEAD~1" 'git clean "-fd"' 'git push origin "+main"' \
+         'git push -fu origin main' 'git checkout .' 'git checkout -- .' 'git checkout "."' 'git restore .' \
+         'git restore --staged --worktree .' 'echo "$(git reset --hard)"' 'echo "`git clean -fd`"' \
+         'x=$(git reset --hard)' 'git -C ../other reset --hard' '/usr/bin/git reset --hard' \
+         'git reset --hard>/dev/null' 'if git reset --hard; then echo ok; fi' 'timeout 5 git clean -fdx' \
+         'sudo -u root rm -rf /srv/x' 'rm "-rf" build' 'find . -name tmp -exec rm -rf {} +' 'xargs -I {} rm -rf {}' \
+         "bash -c 'git push --force'" 'ssh vps "git -C /app reset --hard"' \
+         "python3 -c \"import os; os.system('git reset --hard')\"" $'# it\'s fine\ngit reset --hard' \
+         $'bash <<EOF\ngit reset --hard\nEOF' 'docker exec app sh -c "rm -rf /data"'; do
+  expect 2 guard-bash.sh "$(bash_call "$c")" "$c"
+done
+# guard-bash: a danger that is only mentioned (commit message, grep pattern, here-document) is allowed
+for c in 'git commit -m "docs: never run git reset --hard"' 'grep -n "git clean -fd" notes.md' \
+         'git commit -m "stop using rm -rf in deploy.sh"' 'echo "use git checkout . carefully"' \
+         'git log --grep "reset --hard"' \
+         $'git commit -m "$(cat <<\'EOF\'\nfix: block git push --force and git reset --hard\nEOF\n)"' \
+         'git restore --staged .' 'git checkout -b feat/x' 'git checkout main' 'git clean -n' 'git push -u origin feat/x' \
+         $'cat > a.sh <<EOF\ngit reset --hard\nEOF' "echo 'rm -rf /' > notes.txt" 'git add -A && git commit -m "chore: tidy (rm -rf old)"'; do
+  expect 0 guard-bash.sh "$(bash_call "$c")" "$c"
+done
 
 # guard-files: blocked
 for p in .env .env.local config/.env.production secrets/db.txt certs/server.pem id_rsa; do
