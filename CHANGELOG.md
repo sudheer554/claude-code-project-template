@@ -2,6 +2,14 @@
 
 Each entry says what changed in Claude Code (or in our understanding), what we changed, and why.
 
+## 0.1.3 · 2026-11-11
+Documenting skill: three more skill-writing rules from Anthropic's guides.
+- **Why:** an audit of the template against Anthropic's skill best practices (official pages checked
+  2026-11-11, prompted by the RoboNuggets "10 NEW Rules for Claude Skills" video + PDF) found 10 of 13
+  rules already in place. Missing: key rules at the top (compaction keeps only the first 5,000 tokens of a
+  skill), no "show your reasoning" lines (newest models may decline), and 3 test prompts in a fresh session.
+- **What:** one bullet group in `.claude/skills/documenting/SKILL.md`; three source rows in `docs/sources.md`.
+
 ## 0.1.2 · 2026-11-08
 `guard-bash.sh`: the fail-safe check now reads only the text a shell or interpreter will run.
 - **Why:** in 0.1.1, one `bash` word anywhere made the guard scan the whole command, so

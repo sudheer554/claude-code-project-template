@@ -23,6 +23,10 @@ description: Writes or updates project documentation (README, docs/, docstrings,
 - One fact lives in one place. Link to it instead of copying it.
 - Any doc or skill file over 100 lines starts with a `## Contents` list; Claude may preview only the top.
 - New skill files: link reference files directly from SKILL.md (one level deep), never file → file → file.
+- New skill files: must-never rules go first (after a long chat Claude Code keeps only the first ~5,000
+  tokens of a skill). Never ask Claude to "show" or "write out" its reasoning (newest models may refuse);
+  ask for the answer plus a short why. A rule that must hold every time → a hook, not capitals.
+- Before relying on a new skill: 3 real test prompts, each run in a fresh session with the skill on and off.
 
 ## Check before finishing
 Every command in the changed docs runs as written, every linked path exists,
