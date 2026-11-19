@@ -15,8 +15,10 @@ done
 ok "JSON files checked"
 
 # 2. CLAUDE.md stays small (it is paid for on every message)
-lines=$(wc -l <CLAUDE.md | tr -d ' ')
-((lines <= 100)) && ok "CLAUDE.md: $lines lines (limit 100)" || bad "CLAUDE.md: $lines lines (limit 100)"
+# CLAUDE.md imports AGENTS.md, so both load on every message: count them together
+lines=$(cat CLAUDE.md AGENTS.md 2>/dev/null | wc -l | tr -d ' ')
+((lines <= 100)) && ok "CLAUDE.md + AGENTS.md: $lines lines (limit 100)" || bad "CLAUDE.md + AGENTS.md: $lines lines (limit 100)"
+grep -q '^@AGENTS.md' CLAUDE.md && ok "CLAUDE.md imports AGENTS.md" || bad "CLAUDE.md must import AGENTS.md (one shared rule file)"
 
 # 3. Skills: frontmatter rules from Anthropic's skill authoring guide
 for f in .claude/skills/*/SKILL.md; do

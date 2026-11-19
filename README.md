@@ -27,7 +27,7 @@ Needs: `git`, `jq` (the hooks parse JSON with it), and for the Python pack, [uv]
 
 | Loaded | Files | Token cost |
 |---|---|---|
-| **Every session** | `CLAUDE.md` + `docs/stack.md` | Paid on every message, so kept small |
+| **Every session** | `CLAUDE.md` → `AGENTS.md` (shared rules for every AI tool) + `docs/stack.md` | Paid on every message, so kept small |
 | **When a matching file is touched** | `.claude/rules/*.md` (e.g. Python rules for `*.py`) | Only while relevant |
 | **When the task matches** | `.claude/skills/*/SKILL.md` (only the one-line descriptions are always visible) | Only when used |
 | **When you type it** | `.claude/commands/` → `/review`, `/test`, `/explain` | Only when typed |

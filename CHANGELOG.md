@@ -2,6 +2,14 @@
 
 Each entry says what changed in Claude Code (or in our understanding), what we changed, and why.
 
+## 0.2.0 · 2026-11-19
+Rules move to `AGENTS.md`, the shared file every AI coding tool reads; `CLAUDE.md` imports it.
+- **Why:** projects are now run by Claude Code and by Codex (and later other tools). One rule file means no drift
+  between models. Codex, Cursor, OpenCode and others read `AGENTS.md`; Claude Code reads `CLAUDE.md`, which pulls it in with `@AGENTS.md`.
+- **What changed:** `AGENTS.md` (new, the former CLAUDE.md content) · `CLAUDE.md` (now `@AGENTS.md` + `@docs/stack.md`) ·
+  `scripts/check.sh` counts CLAUDE.md + AGENTS.md together (same 100-line budget) and checks the import · README load table.
+- **Next:** Copier support (`copier update` pushes template fixes into projects made from it).
+
 ## 0.1.3 · 2026-11-11
 Documenting skill: three more skill-writing rules from Anthropic's guides.
 - **Why:** an audit of the template against Anthropic's skill best practices (official pages checked
