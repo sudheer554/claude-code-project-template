@@ -194,6 +194,30 @@ while IFS= read -r line; do
   done
 done < <(words "$cmd")
 
+# changing Claude's own settings or safety hooks from Bash. The ask rules in settings.json cover only the
+# Edit / Write tools, so without this a script could switch the guards off with no prompt. Reading is fine.
+# Shell commands are checked per segment: the path plus a write sign (> redirect, cp / mv / rm / tee / chmod
+# ..., sed -i). When an interpreter runs (python3, node, bash, here-documents fed to one) the whole command is
+# checked, so a path on one line and json.dump(...) on another is caught. Commit messages and grep patterns
+# that only mention the path are allowed; a here-document commit message naming it with a write word is not.
+q="'"
+cfg='\.claude/(settings(\.local)?\.json|hooks([/[:space:]"'"$q"']|$))'
+wr='(>|(^|[^[:alnum:]_.-])(tee|cp|mv|rm|ln|chmod|chown|truncate|install|rsync|dd|patch|unlink)([^[:alnum:]_.-]|$)'
+wr+='|sed[[:space:]]+(-[[:alnum:]]*i|--in-place)|perl[[:space:]]+-[[:alnum:]]*i'
+wr+='|json\.dump|write_text|write_bytes|\.write\(|shutil\.|os\.(remove|unlink|rename|replace)|open\([^)]*[wax+]["'"$q"'])'
+if grep -qE "$cfg" <<<"$cmd"; then
+  cfg_block() { block "changing Claude's settings or safety hooks from Bash (use the Edit tool: it asks the user first)"; }
+  nored=$(sed -E 's/[0-9]*>&[0-9-]//g; s#[0-9&]*>>?[[:space:]]*/dev/null##g' <<<"$cmd")
+  while IFS= read -r seg; do
+    grep -qE "$cfg" <<<"$seg" || continue
+    seg=$(sed -E 's/^[[:space:]]*//' <<<"$seg")
+    case $seg in 'git commit'* | 'git log'* | grep* | egrep* | rg*) continue ;; esac
+    grep -qE "$wr" <<<"$seg" && cfg_block
+  done < <(tr ';&|`' '\n' <<<"$nored")
+  grep -qE '(^|[[:space:];&|(])(python[0-9.]*|node|deno|bun|perl|ruby|osascript|bash|sh|zsh)([[:space:]]|$)' <<<"$nored" \
+    && grep -qE "$wr" <<<"$nored" && cfg_block
+fi
+
 # dropping data
 grep -qiE '(drop[[:space:]]+(table|database|schema)|truncate[[:space:]]+table)' <<<"$cmd" && block "dropping database objects"
 
