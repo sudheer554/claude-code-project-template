@@ -2,6 +2,16 @@
 
 Each entry says what changed in Claude Code (or in our understanding), what we changed, and why.
 
+## 0.2.1 · 2026-11-25
+`guard-bash.sh` blocks Bash commands that change Claude's own settings or safety hooks.
+- **Why:** `ask` / `deny` rules match a tool, not a file. An `ask` rule on `Edit(~/.claude/settings.json)` never
+  fired when Claude changed that file with a Python script through Bash. Attackers now target `.claude` config
+  (startup hooks that install a backdoor), so the guards must not be switchable from a shell.
+- **What changed:** `guard-bash.sh` blocks a command that names `.claude/settings*.json` or `.claude/hooks/` and
+  writes (`>`, cp, mv, rm, tee, chmod, sed -i, Python `json.dump` / `open(…,"w")`); reading is allowed, and so are
+  commit messages and grep patterns that only mention the path · `scripts/test-hooks.sh` +19 tests (115 total).
+- **Known limit:** a here-document commit message that names the path next to a write word is blocked (fail safe).
+
 ## 0.2.0 · 2026-11-19
 Rules move to `AGENTS.md`, the shared file every AI coding tool reads; `CLAUDE.md` imports it.
 - **Why:** projects are now run by Claude Code and by Codex (and later other tools). One rule file means no drift

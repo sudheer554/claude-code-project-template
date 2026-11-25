@@ -61,6 +61,21 @@ for c in 'git commit -m "docs: never run git reset --hard"' 'grep -n "git clean 
          'bash scripts/test-hooks.sh && git commit -m "block git reset --hard"' "printf x | bash -c \"\$1\"; echo 'rm -fr backend'"; do
   expect 0 guard-bash.sh "$(bash_call "$c")" "$c"
 done
+# guard-bash: Claude's settings and safety hooks cannot be changed from Bash (the ask rules see only Edit/Write)
+for c in 'cp /tmp/x.json ~/.claude/settings.json' "echo '{}' > .claude/settings.local.json" \
+         "sed -i '' 's/deny/allow/' ~/.claude/settings.json" 'rm ~/.claude/hooks/guard-bash.sh' \
+         'chmod -x .claude/hooks/guard-bash.sh' 'ls && tee -a ~/.claude/settings.json < x' \
+         'cat > ~/.claude/hooks/new.sh <<EOF' 'mv x.sh "$HOME/.claude/hooks/"' \
+         $'python3 - <<EOF\nimport json\np = "/srv/app/.claude/settings.json"\njson.dump({}, open(p, "w"))\nEOF' \
+         "python3 -c \"open('.claude/settings.json','w').write('{}')\""; do
+  expect 2 guard-bash.sh "$(bash_call "$c")" "$c"
+done
+for c in 'cat ~/.claude/settings.json' 'jq .permissions ~/.claude/settings.json 2>/dev/null' 'ls -la ~/.claude/hooks/' \
+         'bash ~/.claude/hooks/test-hooks.sh 2>&1 | tail -3' 'cmp -s .claude/hooks/guard-bash.sh ~/.claude/hooks/guard-bash.sh' \
+         'git commit -m "docs: never cp into .claude/hooks/"' 'grep -n deny ~/.claude/settings.json' \
+         "python3 -c \"import json; print(json.load(open('.claude/settings.json')))\"" 'git add .claude/hooks/guard-bash.sh'; do
+  expect 0 guard-bash.sh "$(bash_call "$c")" "$c"
+done
 
 # guard-files: blocked
 for p in .env .env.local config/.env.production secrets/db.txt certs/server.pem id_rsa; do
