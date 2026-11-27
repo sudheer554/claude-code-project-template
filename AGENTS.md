@@ -12,10 +12,12 @@ See `docs/stack.md`.
 |---|---|
 | `src/` | Application code, one responsibility per module |
 | `tests/` | Tests, mirroring the `src/` layout |
-| `docs/` | `architecture.md` · `conventions.md` · `decisions.md` · `sources.md` |
+| `docs/` | `prd.md` (what + why) · `tasks.md` (next step) · `architecture.md` · `conventions.md` · `decisions.md` · `sources.md` |
 | `.claude/` | `skills/` (procedures) · `agents/` · `commands/` · `hooks/` · `rules/` (per-file-type rules) |
 
 ## Rules
+- Start of session: read **Now** in `docs/tasks.md`. End: tick it and move it to **Done**.
+- Build only what `docs/prd.md` lists as in scope; for anything else, ask first.
 - Plan before any change touching 3+ files: list each file and why, then wait for approval.
 - One task per session. Suggest a commit after each working change.
 - One job per file; keep UI, logic, and data access in separate layers.
@@ -39,4 +41,5 @@ See `docs/stack.md`.
 ## Where deeper information lives
 - Procedures (coding, testing, debugging, documenting): `.claude/skills/` (load on their own when needed)
 - Language rules: `.claude/rules/` (load when matching files are touched)
+- Product (what + why): `docs/prd.md` · Next step: `docs/tasks.md`
 - System design: `docs/architecture.md` · Naming and style: `docs/conventions.md`

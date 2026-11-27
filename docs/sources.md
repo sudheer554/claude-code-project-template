@@ -33,3 +33,4 @@ Last full check: **2026-11-04**.
 | One validated config + `.env.example`; secrets masked in logs | `packs/python-fastapi/src/app/config.py` | Hasan Aboul Hasan, *Vibe Engineering Blocks*, Part 2 (Env vars, Secrets) |
 | Secret scan on every commit and in CI | `.pre-commit-config.yaml`, CI | [gitleaks](https://github.com/gitleaks/gitleaks) |
 | Base structure: CLAUDE.md + 4 skills + 3 agents + 3 commands + hooks + docs | whole repo | Euron, Super30 *Claude Code Masterclass for Developers* (Sudhanshu Kumar) |
+| PRD before architecture; a task list where each task traces to a requirement and has a "done when" test (checked 2026-11-27) | `docs/prd.md`, `docs/tasks.md`, `AGENTS.md` | Euron, *Real-world Project 1.0* + *AI Product Engineering 2.0* (problem → PRD → architecture) · [GitHub Spec Kit](https://github.github.com/spec-kit/) (spec → plan → tasks) · [Kiro specs](https://kiro.dev/docs/specs/) (requirements → design → tasks) |

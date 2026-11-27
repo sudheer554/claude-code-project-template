@@ -14,7 +14,8 @@ It is set up to spend as few tokens as possible, to be safe by default, and to t
 
 1. Click **Use this template** on GitHub (or clone it), then open the folder.
 2. Optional, pick a stack: `scripts/apply-pack.sh python-fastapi`
-3. Fill in the top of `CLAUDE.md` (project name and one-line purpose).
+3. Fill in the top of `AGENTS.md` (project name and one-line purpose), then `docs/prd.md`
+   (problem, who pays, in scope, out of scope) and the first task in `docs/tasks.md`.
 4. `cp .env.example .env` and fill in real values.
 5. `uvx pre-commit install` (secret scan on every commit).
 6. Run `scripts/check.sh`. Every line should be ✅.
@@ -33,6 +34,7 @@ Needs: `git`, `jq` (the hooks parse JSON with it), and for the Python pack, [uv]
 | **When you type it** | `.claude/commands/` → `/review`, `/test`, `/explain` | Only when typed |
 | **In a separate context** | `.claude/agents/` → code-reviewer, debugger, test-writer | Kept out of your main chat |
 | **Never (runs as code)** | `.claude/hooks/` | Zero tokens |
+| **At the start of a task** | `docs/tasks.md` (Now), `docs/prd.md` (what + why) | Only when read; each kept to one page |
 | **When asked** | `docs/architecture.md`, `conventions.md`, `decisions.md` | Only when read |
 
 ## Layout
@@ -45,7 +47,7 @@ CLAUDE.md                 always-on rules and a map (under 100 lines)
   skills/                 coding · testing · debugging · documenting (procedures with checklists)
   agents/                 code-reviewer (read-only) · debugger · test-writer (tests/ only)
   commands/               /review · /test · /explain
-docs/                     stack · architecture · conventions · decisions · sources
+docs/                     prd · tasks · stack · architecture · conventions · decisions · sources
 packs/python-fastapi/     optional stack pack (uv, FastAPI, pytest, Ruff, Python rules)
 scripts/                  check.sh · test-hooks.sh · apply-pack.sh
 src/  tests/              your code

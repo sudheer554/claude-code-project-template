@@ -2,6 +2,19 @@
 
 Each entry says what changed in Claude Code (or in our understanding), what we changed, and why.
 
+## 0.3.0 · 2026-11-27
+Two new starter docs: `docs/prd.md` (what + why) and `docs/tasks.md` (next step).
+- **Why:** new projects had `architecture.md` (the how) but nothing for the what or the next step, so the AI
+  had to guess both. Euron's *Real-world Project 1.0* and *AI Product Engineering 2.0* start every project
+  with a PRD. GitHub Spec Kit (`spec.md` → `plan.md` → `tasks.md`) and Kiro (`requirements.md` → `design.md`
+  → `tasks.md`) use the same order. We keep one file each, not one folder per feature: lighter for solo projects.
+- **What changed:** `docs/prd.md` (problem · users · money: who pays, how much, first-payment date · goals ·
+  in scope with a test per line · out of scope · open questions) · `docs/tasks.md` (Now / Next / Blocked / Done,
+  each task linked to a PRD line with a "done when" test) · `AGENTS.md` (map + two rules: read Now at the start,
+  build only what the PRD lists) · README (quick start, load table, layout) · `docs/sources.md`.
+- **Not added:** `rules.md` (that is `AGENTS.md`), `memory.md` (Claude Code's auto-memory + `decisions.md` cover it),
+  `design.md` (add it per project when there is a UI).
+
 ## 0.2.1 · 2026-11-25
 `guard-bash.sh` blocks Bash commands that change Claude's own settings or safety hooks.
 - **Why:** `ask` / `deny` rules match a tool, not a file. An `ask` rule on `Edit(~/.claude/settings.json)` never
